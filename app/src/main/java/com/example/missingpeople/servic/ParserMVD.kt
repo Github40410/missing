@@ -164,7 +164,7 @@ class ParserMVD {
                         val doc = Jsoup.connect(url).userAgent(userAgents.random()).get()
 
                         // Оригинальный код парсинга без изменений
-                        val fullName = doc.selectFirst("span[itemprop=title]")?.text() ?: ""
+                        var fullName =  ""
                         val description = doc.selectFirst("div.tab[data-tab=1] .text")
                             ?.text()
                             ?.replace("\\s+".toRegex(), " ")
@@ -188,16 +188,16 @@ class ParserMVD {
                         val birthDate = parseDate(metaData["Дата рождения"], "birthDate")
                         val disappearanceDate = parseDate(metaData["Дата пропажи"], "disappearanceDate")
 
-                        val photoUrl = doc.selectFirst("img[itemprop=thumbnail]")
-                            ?.attr("src")
-                            ?.replace("_preview", "") ?: ""
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(
-                                context,
-                                "Обработано: ${i} записей",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
+                        val imgElement = doc.selectFirst("img.imgswipdis")
+                        var photoUrl = ""
+                        imgElement?.let { img ->
+                            val src = img.attr("src")
+                            val alt = img.attr("alt")
+
+                            photoUrl = src
+                            fullName = alt
+                        } ?: Toast.makeText(context, "Не удалось обработать", Toast.LENGTH_SHORT).show()
+
                         i=i+1
                         MissingPerson(fullName, description, birthDate, disappearanceDate, gender, photoUrl)
                     } catch (e: Exception) {

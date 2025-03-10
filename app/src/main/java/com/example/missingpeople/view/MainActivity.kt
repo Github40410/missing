@@ -75,7 +75,7 @@ class MainActivity : AppCompatActivity() {
                 ).show()
                 people.forEach { element ->
                     val textView = TextView(this@MainActivity).apply {
-                        text = element.description
+                        text = element.name
                         textSize = 15f
                         setTextIsSelectable(true)
                         setTextColor(
