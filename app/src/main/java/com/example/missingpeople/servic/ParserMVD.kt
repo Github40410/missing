@@ -1,7 +1,12 @@
 package com.example.missingpeople.servic
 
 import android.content.Context
+import android.view.LayoutInflater
+import android.widget.LinearLayout
 import android.widget.Toast
+import androidx.core.content.ContentProviderCompat.requireContext
+import com.example.missingpeople.R
+import com.example.missingpeople.databinding.ActivityMainBinding
 import com.example.missingpeople.repositor.MissingPerson
 import com.example.missingpeople.repositor.RepWebMVD
 import com.example.missingpeople.view.MainActivity
@@ -70,6 +75,7 @@ class ParserMVD {
     )
     private val allLinks = ArrayList<String>()
     private val semaphore = Semaphore(5)
+
     private val dateFormats = mapOf(
         "birthDate" to SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()),
         "disappearanceDate" to SimpleDateFormat("MMMM dd, yyyy", Locale.US)
@@ -89,6 +95,7 @@ class ParserMVD {
 
             lastPageLink?.let { url ->
                 doc = Jsoup.connect(url).get()
+
                 val maxPageElement = doc.selectFirst("span.searchPaginationSelected")
                 val maxPage = maxPageElement?.text()?.trim()?.toIntOrNull() ?: 1
 
@@ -136,7 +143,7 @@ class ParserMVD {
         val links = mutableListOf<String>()
         try {
             val doc = Jsoup.connect(url)
-                .timeout(15_000)
+                .userAgent(userAgents.random())
                 .get()
 
             doc.select("a.item__title").forEach { element ->
@@ -152,9 +159,8 @@ class ParserMVD {
     }
 
     // Парсинг пропавшего
-    public suspend fun parserPersonMissing(urls: List<String>, context: Context):List<MissingPerson>{
+    public suspend fun parserPersonMissing(urls: List<String>, context: Context, constructView: ConstructView):List<MissingPerson>{
         val listMissingPeople = ArrayList<MissingPerson>()
-        var i:Int = 1;
 
         // Параллельная обработка с ограничением
         val jobs = urls.map { url ->
@@ -165,10 +171,6 @@ class ParserMVD {
 
                         // Оригинальный код парсинга без изменений
                         var fullName =  ""
-                        val description = doc.selectFirst("div.tab[data-tab=1] .text")
-                            ?.text()
-                            ?.replace("\\s+".toRegex(), " ")
-                            ?.trim() ?: ""
 
                         val metaElements = doc.select(".meta_list .meta")
                         val metaData = mutableMapOf<String, String>()
@@ -189,17 +191,22 @@ class ParserMVD {
                         val disappearanceDate = parseDate(metaData["Дата пропажи"], "disappearanceDate")
 
                         val imgElement = doc.selectFirst("img.imgswipdis")
+
+                        // Извлекаем ФИО из og:title
+                        fullName = doc.selectFirst("meta[property=og:title]")?.attr("content").toString()
+                        val description = doc.selectFirst("meta[property=og:description]")?.attr("content").toString()
+
+
                         var photoUrl = ""
                         imgElement?.let { img ->
                             val src = img.attr("src")
-                            val alt = img.attr("alt")
 
                             photoUrl = src
-                            fullName = alt
                         } ?: Toast.makeText(context, "Не удалось обработать", Toast.LENGTH_SHORT).show()
 
-                        i=i+1
+
                         MissingPerson(fullName, description, birthDate, disappearanceDate, gender, photoUrl)
+
                     } catch (e: Exception) {
                         null
                     }
@@ -208,7 +215,12 @@ class ParserMVD {
         }
 
         // Собираем все результаты
-        jobs.awaitAll().filterNotNull().forEach { listMissingPeople.add(it) }
+        jobs.awaitAll().filterNotNull().forEach {
+            listMissingPeople.add(it)
+            withContext(Dispatchers.Main) {
+                constructView.createDynamicImageTextItem(context, constructView.linearLayout, it)
+            }
+        }
 
         withContext(Dispatchers.Main) {
             Toast.makeText(

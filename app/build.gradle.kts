@@ -8,6 +8,10 @@ android {
     namespace = "com.example.missingpeople"
     compileSdk = 35
 
+    buildFeatures {
+        viewBinding = true
+    }
+
     defaultConfig {
         applicationId = "com.example.missingpeople"
         minSdk = 24
