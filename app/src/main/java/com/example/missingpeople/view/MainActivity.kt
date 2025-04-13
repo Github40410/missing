@@ -27,6 +27,7 @@ import com.example.missingpeople.repositor.MissingPerson
 import com.example.missingpeople.repositor.RepWebMVD
 import com.example.missingpeople.servic.ConstructView
 import com.example.missingpeople.servic.ParserMVD
+import com.example.missingpeople.servic.WorkScheduler
 import com.google.android.material.internal.ViewUtils.dpToPx
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -55,14 +56,17 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
-        val urlMVD = repositMVD.getUrlMVD()
+        // Запуск периодической работы
+        WorkScheduler(applicationContext).scheduleHourlyWork()
 
-        val constraintLayoutListPeople = findViewById<ConstraintLayout>(R.id.main)
+
+        val urlMVD = repositMVD.getUrlMVD()
 
         lifecycleScope.launch(Dispatchers.IO){
             // Запускаем в IO для сетевых/тяжелых операций
             val constructView = ConstructView(findViewById(R.id.linearLayoutAllPeople))
-            val people = parserMVD.parserPersonMissing(parserMVD.collectUniqueLinks(parserMVD.extractAllPageUrls(urlMVD)), this@MainActivity, constructView)
+            parserMVD.constructView = constructView
+            val people = parserMVD.parserPersonMissing(parserMVD.collectUniqueLinks(parserMVD.extractAllPageUrls(urlMVD)), this@MainActivity)
 
             // Обновляем UI в главном потоке
             withContext(Dispatchers.Main) {

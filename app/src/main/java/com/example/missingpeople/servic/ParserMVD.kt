@@ -29,6 +29,8 @@ import java.util.Locale
 
 class ParserMVD {
 
+    public var constructView: ConstructView? = null
+
     private val userAgents = listOf(
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Mozilla/5.0 (iPhone; CPU iPhone OS 17_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1",
@@ -159,7 +161,7 @@ class ParserMVD {
     }
 
     // Парсинг пропавшего
-    public suspend fun parserPersonMissing(urls: List<String>, context: Context, constructView: ConstructView):List<MissingPerson>{
+    public suspend fun parserPersonMissing(urls: List<String>, context: Context):List<MissingPerson>{
         val listMissingPeople = ArrayList<MissingPerson>()
 
         // Параллельная обработка с ограничением
@@ -215,10 +217,16 @@ class ParserMVD {
         }
 
         // Собираем все результаты
-        jobs.awaitAll().filterNotNull().forEach {
-            listMissingPeople.add(it)
-            withContext(Dispatchers.Main) {
-                constructView.createDynamicImageTextItem(context, constructView.linearLayout, it)
+        if(constructView!=null) {
+            jobs.awaitAll().filterNotNull().forEach {
+                listMissingPeople.add(it)
+                withContext(Dispatchers.Main) {
+                    constructView!!.createDynamicImageTextItem(
+                        context,
+                        constructView!!.linearLayout,
+                        it
+                    )
+                }
             }
         }
 

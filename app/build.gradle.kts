@@ -42,6 +42,10 @@ android {
 
 dependencies {
 
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    implementation("androidx.concurrent:concurrent-futures-ktx:1.1.0")
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.okhttp3:okhttp:5.0.0-alpha.12")
     implementation("org.jsoup:jsoup:1.15.4")
     implementation("com.fleeksoft.ksoup:ksoup:0.2.0")
     implementation(libs.androidx.core.ktx)
