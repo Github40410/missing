@@ -20,6 +20,9 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.marginEnd
 import androidx.lifecycle.lifecycleScope
+import androidx.work.PeriodicWorkRequest
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.bumptech.glide.Glide
 import com.example.missingpeople.R
 import com.example.missingpeople.databinding.ActivityMainBinding
@@ -27,12 +30,14 @@ import com.example.missingpeople.repositor.MissingPerson
 import com.example.missingpeople.repositor.RepWebMVD
 import com.example.missingpeople.servic.ConstructView
 import com.example.missingpeople.servic.ParserMVD
+import com.example.missingpeople.servic.ParserWorker
 import com.example.missingpeople.servic.WorkScheduler
 import com.google.android.material.internal.ViewUtils.dpToPx
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.Semaphore
+import java.util.concurrent.TimeUnit
 
 
 class MainActivity : AppCompatActivity() {
@@ -57,7 +62,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Запуск периодической работы
-        WorkScheduler(applicationContext).scheduleHourlyWork()
+        //WorkScheduler(applicationContext).scheduleHourlyWork()
+
+        val parserWork = PeriodicWorkRequestBuilder<ParserWorker>(15, TimeUnit.MINUTES, 5, TimeUnit.MINUTES).build()
+        WorkManager.getInstance(applicationContext).enqueue(parserWork)
 
 
         val urlMVD = repositMVD.getUrlMVD()
@@ -82,7 +90,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showNotification(person: MissingPerson) {
-
         NotificationPeopleMissing(this).showNotification(person)
     }
 

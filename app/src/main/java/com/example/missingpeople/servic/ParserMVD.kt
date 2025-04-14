@@ -85,7 +85,7 @@ class ParserMVD {
 
     suspend fun extractAllPageUrls(startUrl: String): ArrayList<String> {
 
-        //User-Agent Проверить!!!
+        allLinks.clear()
 
         val urlConstruct = "https://поисковая-база.рф/search/sOrder,dt_pub_date/iOrderType,desc/category,1/iPage,"
 
@@ -217,9 +217,9 @@ class ParserMVD {
         }
 
         // Собираем все результаты
-        if(constructView!=null) {
-            jobs.awaitAll().filterNotNull().forEach {
-                listMissingPeople.add(it)
+        jobs.awaitAll().filterNotNull().forEach {
+            listMissingPeople.add(it)
+            if(constructView!=null) {
                 withContext(Dispatchers.Main) {
                     constructView!!.createDynamicImageTextItem(
                         context,
