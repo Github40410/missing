@@ -1,8 +1,17 @@
 package com.example.missingpeople.view
 
+import android.Manifest
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Paint
+import android.icu.util.Calendar
+import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
+import android.provider.Settings
 import android.text.TextUtils
 import android.util.TypedValue
 import android.view.LayoutInflater
@@ -15,11 +24,18 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.constraintlayout.widget.ConstraintSet
+import androidx.constraintlayout.widget.ConstraintSet.Constraint
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.marginEnd
 import androidx.lifecycle.lifecycleScope
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequest
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
@@ -28,6 +44,7 @@ import com.example.missingpeople.R
 import com.example.missingpeople.databinding.ActivityMainBinding
 import com.example.missingpeople.repositor.MissingPerson
 import com.example.missingpeople.repositor.RepWebMVD
+import com.example.missingpeople.servic.AlarmParserMVD
 import com.example.missingpeople.servic.ConstructView
 import com.example.missingpeople.servic.ParserMVD
 import com.example.missingpeople.servic.ParserWorker
@@ -38,6 +55,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
+
 
 
 class MainActivity : AppCompatActivity() {
@@ -61,12 +79,10 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
+        checkExactAlarmPermission()
+
         // Запуск периодической работы
-        //WorkScheduler(applicationContext).scheduleHourlyWork()
-
-        val parserWork = PeriodicWorkRequestBuilder<ParserWorker>(15, TimeUnit.MINUTES, 5, TimeUnit.MINUTES).build()
-        WorkManager.getInstance(applicationContext).enqueue(parserWork)
-
+        AlarmParserMVD.setAlarm(this)
 
         val urlMVD = repositMVD.getUrlMVD()
 
@@ -91,6 +107,17 @@ class MainActivity : AppCompatActivity() {
 
     private fun showNotification(person: MissingPerson) {
         NotificationPeopleMissing(this).showNotification(person)
+    }
+
+
+    private fun checkExactAlarmPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            if (!alarmManager.canScheduleExactAlarms()) {
+                // Открываем настройки, если разрешения нет
+                startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
+            }
+        }
     }
 
 }

@@ -5,6 +5,7 @@ import android.os.Looper
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import androidx.work.CoroutineWorker
+import androidx.work.ForegroundInfo
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.example.missingpeople.R
@@ -27,6 +28,10 @@ class ParserWorker(context: Context, params: WorkerParameters):
         }catch (e: Exception){
             Result.retry()
         }
+    }
+
+    override fun getForegroundInfo(): ForegroundInfo {
+        return super.getForegroundInfo()
     }
 
     private fun parserMVD(context: Context){

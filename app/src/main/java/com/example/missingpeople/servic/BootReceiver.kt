@@ -5,13 +5,13 @@ import android.content.Context
 import android.content.Intent
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.example.missingpeople.view.MainActivity
 import java.util.concurrent.TimeUnit
 
 class BootReceiver: BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent?) {
-        if (intent?.action == Intent.ACTION_BOOT_COMPLETED) {
-            val parserWork = PeriodicWorkRequestBuilder<ParserWorker>(15, TimeUnit.MINUTES, 5, TimeUnit.MINUTES).build()
-            WorkManager.getInstance(context).enqueue(parserWork)
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
+            AlarmParserMVD.setAlarm(context)
         }
     }
 }
