@@ -17,6 +17,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.example.missingpeople.view.MainActivity
+import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 
 class AlarmParserMVD:BroadcastReceiver() {
@@ -34,8 +35,6 @@ class AlarmParserMVD:BroadcastReceiver() {
 
         // Переустанавливаем будильник для следующего срабатывания через 15 минут
 
-        setAlarm(context)
-
     }
 
     companion object {
@@ -45,9 +44,15 @@ class AlarmParserMVD:BroadcastReceiver() {
             val pendingIntent =
                 PendingIntent.getBroadcast(context, 0, alarmIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
+
+            val thisDate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                LocalDateTime.now().hour
+            } else {
+                Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+            }
             val calendar: Calendar = Calendar.getInstance().apply {
-                set(Calendar.HOUR_OF_DAY, 0)
-                set(Calendar.MINUTE, 30)
+                set(Calendar.HOUR_OF_DAY, thisDate)
+                set(Calendar.MINUTE, 0)
                 set(Calendar.SECOND, 0)
                 set(Calendar.MILLISECOND, 0)
                 if(before(Calendar.getInstance()))
