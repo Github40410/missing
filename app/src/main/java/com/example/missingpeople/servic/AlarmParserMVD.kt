@@ -23,18 +23,15 @@ import java.util.concurrent.TimeUnit
 class AlarmParserMVD:BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        Toast.makeText(
-            context,
-            "Планировщик запущен",
-            Toast.LENGTH_SHORT
-        ).show()
+
         val parserWork = OneTimeWorkRequestBuilder<ParserWorker>().setConstraints(
             Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
         ).build()
         WorkManager.getInstance(context).enqueueUniqueWork("ParserWorkMVD", ExistingWorkPolicy.REPLACE, parserWork)
 
-        // Переустанавливаем будильник для следующего срабатывания через 15 минут
+        // Переустанавливаем будильник для следующего срабатывания
 
+        setAlarm(context)
     }
 
     companion object {
@@ -73,6 +70,21 @@ class AlarmParserMVD:BroadcastReceiver() {
                     pendingIntent
                 )
             }
+        }
+    }
+
+    fun cancelAlarm(context: Context) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val alarmIntent = Intent(context, AlarmParserMVD::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            0,
+            alarmIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_NO_CREATE
+        )
+        pendingIntent?.let {
+            alarmManager.cancel(it)
+            it.cancel()
         }
     }
 }
