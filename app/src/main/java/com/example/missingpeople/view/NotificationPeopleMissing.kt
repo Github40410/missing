@@ -4,7 +4,9 @@ import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Build
@@ -67,32 +69,42 @@ class NotificationPeopleMissing(private val context: Context) {
                     .get()
 
                 val notification = createNotification(person, bitmap)
-                if (ActivityCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.POST_NOTIFICATIONS
-                    ) != PackageManager.PERMISSION_GRANTED
-                ) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-
-                }
-                NotificationManagerCompat.from(context).notify(notificationId, notification)
-            }catch (e: Exception) {
-                // Fallback notification if image loading fails
+                showNotificationWithPermissionCheck(notification, person)
+            } catch (e: Exception) {
                 val fallbackNotification = createFallbackNotification(person)
-                NotificationManagerCompat.from(context).notify(notificationId, fallbackNotification)
+                showNotificationWithPermissionCheck(fallbackNotification, person)
             }
+        }
+    }
 
+
+    private fun showNotificationWithPermissionCheck(notification: Notification, person: MissingPerson) {
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            val notificationManager = NotificationManagerCompat.from(context)
+            notificationManager.notify(notificationId, notification)
         }
     }
 
     private fun createNotification(person: MissingPerson, bitmap: Bitmap): Notification {
-        // Create custom notification layout
+        // Создаем Intent для открытия PersonDetailActivity
+        val intent = Intent(context, PersonDetailActivity::class.java).apply {
+            putExtra(PersonDetailActivity.EXTRA_PERSON, person)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+
+        // Создаем PendingIntent
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // Создаем кастомный layout для уведомления
         val contentView = RemoteViews(context.packageName, R.layout.notification_missing_person)
         contentView.setTextViewText(R.id.tvName, person.name)
         contentView.setImageViewBitmap(R.id.ivPhoto, bitmap)
@@ -100,11 +112,11 @@ class NotificationPeopleMissing(private val context: Context) {
         return NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.error_image)
             .setCustomContentView(contentView)
+            .setContentIntent(pendingIntent) // Устанавливаем PendingIntent
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
+            .setAutoCancel(true) // Уведомление исчезнет при клике
             .build()
     }
-
 
 
 }

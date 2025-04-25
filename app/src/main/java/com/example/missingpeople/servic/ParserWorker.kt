@@ -52,11 +52,11 @@ class ParserWorker(context: Context, params: WorkerParameters):
                 Toast.LENGTH_SHORT
             ).show()
         }
-        if(people.isNotEmpty()){
-            android.os.Handler(Looper.getMainLooper()).post {
-                NotificationPeopleMissing(context).showNotification(people.get(1))
-            }
 
+        if(people.isNotEmpty()) {
+            android.os.Handler(Looper.getMainLooper()).post {
+                NotificationPeopleMissing(context).showNotification(people[0])
+            }
         }
     }
 }

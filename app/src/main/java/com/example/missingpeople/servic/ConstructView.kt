@@ -1,6 +1,7 @@
 package com.example.missingpeople.servic
 
 import android.content.Context
+import android.content.Intent
 import android.text.TextUtils
 import android.util.TypedValue
 import android.widget.ImageView
@@ -9,6 +10,7 @@ import android.widget.TextView
 import com.bumptech.glide.Glide
 import com.example.missingpeople.R
 import com.example.missingpeople.repositor.MissingPerson
+import com.example.missingpeople.view.PersonDetailActivity
 
 class ConstructView(val linearLayout: LinearLayout) {
     fun createDynamicImageTextItem(
@@ -68,6 +70,16 @@ class ConstructView(val linearLayout: LinearLayout) {
 
         // Устанавливаем текст
         textView.text = missingPerson.name
+
+        container.setOnClickListener{
+            val intentPerson = Intent(context, PersonDetailActivity::class.java).apply {
+                putExtra(PersonDetailActivity.EXTRA_PERSON, missingPerson)
+            }
+
+            context.startActivity(intentPerson)
+
+        }
+
 
         // Добавляем контейнер в родительский лайаут
         parent.addView(container)

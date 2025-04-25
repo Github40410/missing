@@ -12,5 +12,7 @@ class MissingPerson (
     val gender: String,
     val photos: String
 ):Serializable {
-
+    companion object {
+        private const val serialVersionUID = 1L
+    }
 }
