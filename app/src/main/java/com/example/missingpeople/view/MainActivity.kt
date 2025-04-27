@@ -13,6 +13,7 @@ import android.os.Bundle
 import android.os.SystemClock
 import android.provider.Settings
 import android.text.TextUtils
+import android.util.Log
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
@@ -44,11 +45,14 @@ import com.example.missingpeople.R
 import com.example.missingpeople.databinding.ActivityMainBinding
 import com.example.missingpeople.repositor.MissingPerson
 import com.example.missingpeople.repositor.RepWebMVD
+import com.example.missingpeople.repositor.RussianRegion
 import com.example.missingpeople.servic.AlarmParserMVD
 import com.example.missingpeople.servic.ConstructView
 import com.example.missingpeople.servic.ParserMVD
 import com.example.missingpeople.servic.ParserWorker
 import com.example.missingpeople.servic.WorkScheduler
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
 import com.google.android.material.internal.ViewUtils.dpToPx
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -71,6 +75,20 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(R.layout.activity_main)
 
+
+        // Добавляем обработчик для "Всей России"
+        binding.chipAllRussia.setOnCheckedChangeListener { _, isChecked ->
+            handleRegionSelection(RussianRegion.ALL, isChecked)
+        }
+
+        // Инициализация списка регионов
+        addRegionsToChipGroup(this, binding.regionsGroup)
+
+        // Обработчик кнопки фильтра
+        binding.btnFilter.setOnClickListener {
+            binding.filterPanel.visibility =
+                if (binding.filterPanel.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+        }
 
         // Настройка системных отступов
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
@@ -120,4 +138,82 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
+    private fun addRegionsToChipGroup(context: Context, chipGroup: ChipGroup) {
+        // Очищаем существующие чипы (кроме "Вся Россия")
+        for (i in 0 until chipGroup.childCount) {
+            val chip = chipGroup.getChildAt(i) as? Chip
+            if (chip?.id != R.id.chipAllRussia) {
+                chipGroup.removeViewAt(i)
+            }
+        }
+
+        // Добавляем все регионы из enum
+        RussianRegion.getAllRegions().forEach { region ->
+            // Пропускаем "Вся Россия", так как она уже есть в макете
+            if (region != RussianRegion.ALL) {
+                val chip = Chip(context).apply {
+                    text = region.displayName
+                    isCheckable = true
+                    isChecked = false
+                    setEnsureMinTouchTargetSize(false)
+                    setChipBackgroundColorResource(R.color.primary)
+
+                    // Обработка выбора/снятия выбора региона
+                    setOnCheckedChangeListener { _, isChecked ->
+                        handleRegionSelection(region, isChecked)
+                    }
+                }
+                chipGroup.addView(chip)
+            }
+        }
+    }
+
+    // 3. Обработчик выбора регионов
+    private fun handleRegionSelection(region: RussianRegion, isChecked: Boolean) {
+        val allRussiaChip = binding.regionChipGroup.findViewById<Chip>(R.id.chipAllRussia)
+
+        when {
+            region == RussianRegion.ALL -> {
+                // Если выбрали "Всю Россию", снимаем выбор с других регионов
+                if (isChecked) {
+                    clearOtherRegionsSelection()
+                }
+            }
+            isChecked -> {
+                // Если выбрали конкретный регион, снимаем "Всю Россию"
+                allRussiaChip?.isChecked = false
+            }
+        }
+
+        updateSelectedRegions()
+    }
+
+    // 4. Метод для сброса выбора других регионов
+    private fun clearOtherRegionsSelection() {
+        for (i in 0 until binding.regionsGroup.childCount) {
+            val chip = binding.regionsGroup.getChildAt(i) as? Chip
+            chip?.isChecked = false
+        }
+    }
+
+    // 5. Обновление списка выбранных регионов
+    private fun updateSelectedRegions() {
+        val selectedRegions = mutableListOf<String>()
+        val allRussiaChip = binding.regionChipGroup.findViewById<Chip>(R.id.chipAllRussia)
+
+        if (allRussiaChip?.isChecked == true) {
+            selectedRegions.add(allRussiaChip.text.toString())
+        } else {
+            for (i in 0 until binding.regionsGroup.childCount) {
+                val chip = binding.regionsGroup.getChildAt(i) as? Chip
+                if (chip?.isChecked == true) {
+                    selectedRegions.add(chip.text.toString())
+                }
+            }
+        }
+
+        // Здесь можно использовать selectedRegions для фильтрации
+        Log.d("RegionFilter", "Выбрано: ${selectedRegions.joinToString()}")
+    }
 }

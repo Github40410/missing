@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="regions_array">
+        <item>Все регионы</item>
+        <item>Киев</item>
+        <item>Львов</item>
+        <item>Одесса</item>
+    </string-array>
+
+    <string-array name="age_array">
+        <item>Любой возраст</item>
+        <item>Дети (0-12)</item>
+        <item>Подростки (13-17)</item>
+        <item>Взрослые (18-60)</item>
+    </string-array>
+
+    <string-array name="gender_array">
+        <item>Любой пол</item>
+        <item>Мужской</item>
+        <item>Женский</item>
+    </string-array>
+
+    <string-array name="period_array">
+        <item>Любой период</item>
+        <item>Последняя неделя</item>
+        <item>Последний месяц</item>
+        <item>Последний год</item>
+    </string-array>
+</resources>
