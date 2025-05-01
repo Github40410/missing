@@ -6,6 +6,8 @@
     <string name="next">Next</string>
     <string name="previous">Previous</string>
 
+
+    <string name="regions_button_text">Регионы</string>
     <string name="filter_button_description">Фильтры</string>
     <string name="search_button_description">Поиск</string>
 

@@ -2,6 +2,7 @@ package com.example.missingpeople.view
 
 import android.Manifest
 import android.app.AlarmManager
+import android.app.AlertDialog
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -69,6 +70,148 @@ class MainActivity : AppCompatActivity() {
     private val parserMVD: ParserMVD = ParserMVD()
     private lateinit var linearLayoutPeople: LinearLayout // Используем lateinit
 
+    private val selectedRegions = mutableSetOf<RussianRegion>(RussianRegion.ALL)
+
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+
+        setupRegionSelection()
+        setupFilterButton()
+        setupSearchButton()
+        updateSelectedRegionsUI()
+    }
+
+    private fun setupRegionSelection() {
+        binding.btnSelectRegions.setOnClickListener {
+            showRegionSelectionDialog()
+        }
+    }
+
+    private fun showRegionSelectionDialog() {
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Выберите регионы")
+            .setMultiChoiceItems(
+                getRegionNames(), // Массив названий регионов
+                getSelectedBooleanArray() // Массив выбранных регионов
+            ) { _, which, isChecked ->
+                handleRegionSelection(which, isChecked)
+            }
+            .setPositiveButton("Готово") { _, _ ->
+                updateSelectedRegionsUI()
+                applyFilters()
+            }
+            .setNegativeButton("Отмена", null)
+            .create()
+
+        dialog.show()
+    }
+
+    private fun getRegionNames(): Array<String> {
+        return (listOf(RussianRegion.ALL) + RussianRegion.getSortedRegions())
+            .map { it.displayName }
+            .toTypedArray()
+    }
+
+    private fun getSelectedBooleanArray(): BooleanArray {
+        val allRegions = listOf(RussianRegion.ALL) + RussianRegion.getSortedRegions()
+        return BooleanArray(allRegions.size) { index ->
+            selectedRegions.contains(allRegions[index])
+        }
+    }
+
+    private fun handleRegionSelection(position: Int, isChecked: Boolean) {
+        val region = when (position) {
+            0 -> RussianRegion.ALL
+            else -> RussianRegion.getSortedRegions()[position - 1]
+        }
+
+        if (isChecked) {
+            if (region == RussianRegion.ALL) {
+                selectedRegions.clear()
+                selectedRegions.add(region)
+            } else {
+                selectedRegions.remove(RussianRegion.ALL)
+                selectedRegions.add(region)
+            }
+        } else {
+            selectedRegions.remove(region)
+        }
+    }
+
+    private fun updateSelectedRegionsUI() {
+        binding.selectedRegionsGroup.removeAllViews()
+
+        if (selectedRegions.contains(RussianRegion.ALL)) {
+            addRegionChip(RussianRegion.ALL)
+        } else {
+            selectedRegions.sortedBy { it.displayName }.forEach { region ->
+                addRegionChip(region)
+            }
+        }
+    }
+
+    private fun addRegionChip(region: RussianRegion) {
+        val chip = Chip(this).apply {
+            text = region.displayName
+            isCloseIconVisible = true
+            setOnCloseIconClickListener {
+                selectedRegions.remove(region)
+                updateSelectedRegionsUI()
+                applyFilters()
+            }
+            setChipBackgroundColorResource(R.color.chipBackground)
+        }
+        binding.selectedRegionsGroup.addView(chip)
+    }
+
+    private fun applyFilters() {
+        // Здесь объединяем фильтрацию по регионам и другим параметрам
+        val filterText = buildString {
+            append("Применены фильтры: ")
+            if (selectedRegions.contains(RussianRegion.ALL)) {
+                append("Все регионы")
+            } else {
+                append("Регионы: ${selectedRegions.joinToString { it.displayName }}")
+            }
+            // Можно добавить другие параметры фильтрации
+        }
+        Toast.makeText(this, filterText, Toast.LENGTH_LONG).show()
+
+        // Реальная фильтрация данных
+        filterData()
+    }
+
+    private fun filterData() {
+        // Реализуйте фактическую фильтрацию данных здесь
+    }
+
+    private fun setupFilterButton() {
+        binding.btnFilter.setOnClickListener {
+            val isVisible = binding.extraFiltersPanel.visibility == View.VISIBLE
+            binding.extraFiltersPanel.visibility = if (isVisible) View.GONE else View.VISIBLE
+        }
+    }
+
+    private fun setupSearchButton() {
+        binding.btnSearch.setOnClickListener {
+            applyFilters()
+            Toast.makeText(this, "Применены фильтры и выполнен поиск", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+
+
+
+
+
+
+
+
+    /*
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -216,4 +359,5 @@ class MainActivity : AppCompatActivity() {
         // Здесь можно использовать selectedRegions для фильтрации
         Log.d("RegionFilter", "Выбрано: ${selectedRegions.joinToString()}")
     }
+     */
 }

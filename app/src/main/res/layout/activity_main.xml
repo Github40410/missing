@@ -8,7 +8,7 @@
     tools:context=".view.MainActivity">
 
 
-    <!-- Новая панель фильтров -->
+    <!-- Панель фильтров -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/filterCard"
         android:layout_width="match_parent"
@@ -33,32 +33,28 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical">
 
-                <!-- Кнопка фильтра -->
+                <!-- Кнопка дополнительных фильтров -->
                 <ImageButton
                     android:id="@+id/btnFilter"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
                     android:src="@drawable/ic_filter"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Фильтры"
-                    app:tint="@color/primary" />
+                    android:contentDescription="Дополнительные фильтры"
+                    app:tint="@color/primary"/>
 
-                <!-- Поле выбора региона -->
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/regionChipGroup"
+                <!-- Кнопка выбора регионов -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSelectRegions"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    app:singleSelection="false">
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipAllRussia"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Вся Россия"
-                        style="@style/Widget.MaterialComponents.Chip.Filter"
-                        android:checked="true"/>
-                </com.google.android.material.chip.ChipGroup>
+                    android:text="Регионы"
+                    android:textColor="@color/primary"
+                    app:icon="@drawable/ic_location"
+                    app:iconTint="@color/primary"
+                    app:strokeColor="@color/primary"/>
 
                 <!-- Кнопка поиска -->
                 <ImageButton
@@ -68,28 +64,32 @@
                     android:src="@drawable/ic_person_search"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="Поиск"
-                    app:tint="@color/primary" />
+                    app:tint="@color/primary"/>
             </LinearLayout>
 
-            <!-- Выпадающая панель фильтров -->
+            <!-- Чипы выбранных регионов -->
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/selectedRegionsGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:singleSelection="false"/>
+
+            <!-- Дополнительные фильтры (изначально скрыты) -->
             <LinearLayout
-                android:id="@+id/filterPanel"
+                android:id="@+id/extraFiltersPanel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:visibility="gone"
                 android:paddingTop="8dp">
 
-                <!-- Список регионов -->
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/regionsGroup"
+                <!-- Здесь можно добавить другие фильтры -->
+                <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:singleSelection="false"
-                    app:selectionRequired="false">
-
-                    <!-- Чипы будут добавляться программно -->
-                </com.google.android.material.chip.ChipGroup>
+                    android:text="Другие фильтры"
+                    android:textStyle="bold"/>
             </LinearLayout>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
@@ -97,16 +97,17 @@
     <ScrollView
         android:id="@+id/scrollViewAllPeople"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:fillViewport="true"
         app:layout_constraintTop_toBottomOf="@id/filterCard"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:fillViewport="true">
+        app:layout_constraintBottom_toBottomOf="parent">
 
         <LinearLayout
             android:id="@+id/linearLayoutAllPeople"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"></LinearLayout>
+            android:orientation="vertical"/>
     </ScrollView>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
