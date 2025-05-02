@@ -24,15 +24,18 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.constraintlayout.widget.ConstraintSet.Constraint
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.marginEnd
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -55,6 +58,7 @@ import com.example.missingpeople.servic.WorkScheduler
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.internal.ViewUtils.dpToPx
+import com.google.android.material.navigation.NavigationView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -65,6 +69,9 @@ import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
 
+
+    private lateinit var drawerLayout: DrawerLayout
+    private lateinit var navView: NavigationView
     private lateinit var binding: ActivityMainBinding
     private val repositMVD: RepWebMVD = RepWebMVD()
     private val parserMVD: ParserMVD = ParserMVD()
@@ -78,6 +85,31 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        drawerLayout = findViewById(R.id.drawer_layout)
+        navView = findViewById(R.id.nav_view)
+        
+
+        // Обработка выбора пунктов меню
+        navView.setNavigationItemSelectedListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.nav_home -> {
+                    // Уже на главной
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                    true
+                }
+                R.id.nav_saved -> {
+                    startActivity(Intent(this, SavedPersonsActivity::class.java))
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                    true
+                }
+                R.id.nav_settings -> {
+                    startActivity(Intent(this, SettingsActivity::class.java))
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                    true
+                }
+                else -> false
+            }
+        }
 
         setupRegionSelection()
         setupFilterButton()
@@ -198,11 +230,93 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupSearchButton() {
         binding.btnSearch.setOnClickListener {
-            applyFilters()
-            Toast.makeText(this, "Применены фильтры и выполнен поиск", Toast.LENGTH_SHORT).show()
+            // Show loading state
+            binding.btnSearch.isEnabled = false
+            binding.btnSearch.setImageResource(R.drawable.ic_person_search)
+
+            // Get selected region URLs
+            val regionUrls = getSelectedRegionUrls()
+
+            if (regionUrls.isEmpty()) {
+                Toast.makeText(this, "Выберите хотя бы один регион", Toast.LENGTH_SHORT).show()
+                binding.btnSearch.isEnabled = true
+                binding.btnSearch.setImageResource(R.drawable.ic_person_search)
+                return@setOnClickListener
+            }
+
+            // Initialize the linear layout for results
+            linearLayoutPeople = binding.linearLayoutAllPeople
+            linearLayoutPeople.removeAllViews()
+
+            // Start parsing in background
+            lifecycleScope.launch(Dispatchers.IO) {
+                try {
+                    val constructView = ConstructView(linearLayoutPeople)
+                    parserMVD.constructView = constructView
+
+                    // Process each region in parallel
+                    val people = regionUrls.flatMap { url ->
+                        parserMVD.parserPersonMissing(
+                            parserMVD.collectUniqueLinks( // Теперь возвращает List<String>
+                                parserMVD.extractAllPageUrls(url)
+                            ),
+                            this@MainActivity
+                        )
+                    }
+
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Найдено: ${people.size} записей",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                        if (people.isNotEmpty()) {
+                            // Show first result as notification
+                            showNotification(people.first())
+                        }
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Ошибка: ${e.localizedMessage}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                } finally {
+                    withContext(Dispatchers.Main) {
+                        binding.btnSearch.isEnabled = true
+                        binding.btnSearch.setImageResource(R.drawable.ic_person_search)
+                    }
+                }
+            }
         }
     }
 
+    private fun getSelectedRegionUrls(): List<String> {
+        return when {
+            selectedRegions.contains(RussianRegion.ALL) -> {
+                listOf(RussianRegion.ALL.srcName)
+            }
+            selectedRegions.isNotEmpty() -> {
+                selectedRegions.map { it.srcName }
+            }
+            else -> emptyList()
+        }
+    }
+
+    private fun showNotification(person: MissingPerson) {
+        NotificationPeopleMissing(this).showNotification(person)
+    }
+
+    override fun onBackPressed() {
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START)
+        } else {
+            super.onBackPressed()
+        }
+    }
 
 
 

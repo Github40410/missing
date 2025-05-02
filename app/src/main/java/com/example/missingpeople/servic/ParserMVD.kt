@@ -121,7 +121,7 @@ class ParserMVD {
         return allLinks
     }
 
-    suspend fun collectUniqueLinks(urls: ArrayList<String>): ArrayList<String> {
+    suspend fun collectUniqueLinks(urls: List<String>): List<String> {
         return coroutineScope {
             urls.map { url ->
                 async(Dispatchers.IO) {
@@ -136,7 +136,7 @@ class ParserMVD {
             }.awaitAll()
                 .flatten()
                 .toSet()
-                .toList() as ArrayList<String>
+                .toList() // Убираем приведение к ArrayList
         }
     }
 

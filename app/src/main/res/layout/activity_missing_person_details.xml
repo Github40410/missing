@@ -139,7 +139,6 @@ android:layout_alignParentEnd="true"
 android:layout_alignParentBottom="true"
 android:layout_margin="16dp"
 android:contentDescription="Сохранить информацию"
-android:src="@drawable/ic_save"
-android:tint="@android:color/white" />
+android:src="@drawable/ic_save"/>
 
     </RelativeLayout>

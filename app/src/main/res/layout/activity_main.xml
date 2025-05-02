@@ -1,4 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".view.MainActivity">
+
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -8,106 +18,121 @@
     tools:context=".view.MainActivity">
 
 
-    <!-- Панель фильтров -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/filterCard"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        app:cardElevation="4dp"
-        app:cardCornerRadius="8dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="8dp">
-
-            <!-- Верхняя строка с кнопками -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
-
-                <!-- Кнопка дополнительных фильтров -->
-                <ImageButton
-                    android:id="@+id/btnFilter"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:src="@drawable/ic_filter"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Дополнительные фильтры"
-                    app:tint="@color/primary"/>
-
-                <!-- Кнопка выбора регионов -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnSelectRegions"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Регионы"
-                    android:textColor="@color/primary"
-                    app:icon="@drawable/ic_location"
-                    app:iconTint="@color/primary"
-                    app:strokeColor="@color/primary"/>
-
-                <!-- Кнопка поиска -->
-                <ImageButton
-                    android:id="@+id/btnSearch"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:src="@drawable/ic_person_search"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Поиск"
-                    app:tint="@color/primary"/>
-            </LinearLayout>
-
-            <!-- Чипы выбранных регионов -->
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/selectedRegionsGroup"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                app:singleSelection="false"/>
-
-            <!-- Дополнительные фильтры (изначально скрыты) -->
-            <LinearLayout
-                android:id="@+id/extraFiltersPanel"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone"
-                android:paddingTop="8dp">
-
-                <!-- Здесь можно добавить другие фильтры -->
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Другие фильтры"
-                    android:textStyle="bold"/>
-            </LinearLayout>
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
-
     <ScrollView
         android:id="@+id/scrollViewAllPeople"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="match_parent"
         android:fillViewport="true"
-        app:layout_constraintTop_toBottomOf="@id/filterCard"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent">
 
         <LinearLayout
-            android:id="@+id/linearLayoutAllPeople"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"/>
+            android:orientation="vertical">
+
+            <!-- Панель фильтров теперь внутри ScrollView -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/filterCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                app:cardElevation="4dp"
+                app:cardCornerRadius="8dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <!-- Верхняя строка с кнопками -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <!-- Кнопка дополнительных фильтров -->
+                        <ImageButton
+                            android:id="@+id/btnFilter"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:src="@drawable/ic_filter"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="Дополнительные фильтры"
+                            app:tint="@color/primary"/>
+
+                        <!-- Кнопка выбора регионов -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnSelectRegions"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Регионы"
+                            android:textColor="@color/primary"
+                            app:icon="@drawable/ic_location"
+                            app:iconTint="@color/primary"
+                            app:strokeColor="@color/primary"/>
+
+                        <!-- Кнопка поиска -->
+                        <ImageButton
+                            android:id="@+id/btnSearch"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:src="@drawable/ic_person_search"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="Поиск"
+                            app:tint="@color/primary"/>
+                    </LinearLayout>
+
+                    <!-- Чипы выбранных регионов -->
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/selectedRegionsGroup"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:singleSelection="false"/>
+
+                    <!-- Дополнительные фильтры -->
+                    <LinearLayout
+                        android:id="@+id/extraFiltersPanel"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone"
+                        android:paddingTop="8dp">
+
+                        <!-- Здесь можно добавить другие фильтры -->
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Другие фильтры"
+                            android:textStyle="bold"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Контейнер для результатов поиска -->
+            <LinearLayout
+                android:id="@+id/linearLayoutAllPeople"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="8dp"/>
+        </LinearLayout>
     </ScrollView>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_view"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        app:headerLayout="@layout/nav_header"
+        app:menu="@menu/nav_menu" />
+
+</androidx.drawerlayout.widget.DrawerLayout>

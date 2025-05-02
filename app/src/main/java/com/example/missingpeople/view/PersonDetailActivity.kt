@@ -12,10 +12,15 @@ import androidx.core.view.WindowInsetsCompat
 import com.bumptech.glide.Glide
 import com.example.missingpeople.R
 import com.example.missingpeople.repositor.MissingPerson
+import com.example.missingpeople.repositor.MissingPersonDatabase
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 class PersonDetailActivity : AppCompatActivity() {
+
+    private lateinit var database: MissingPersonDatabase
+    private lateinit var currentPerson: MissingPerson
 
     companion object {
         const val EXTRA_PERSON = "extra_person"
@@ -31,15 +36,29 @@ class PersonDetailActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_missing_person_details)
 
+        // Инициализация базы данных
+        database = MissingPersonDatabase(this)
+
         val person = if (intent?.hasExtra(EXTRA_PERSON) == true) {
             intent.getSerializableExtra(EXTRA_PERSON) as? MissingPerson
         } else {
-            // Можно добавить обработку deep link или других способов открытия
             null
         }
-        person?.let { bindPersonData(it) } ?: run {
+
+        person?.let {
+            currentPerson = it
+            bindPersonData(it)
+            setupSaveButton(it)
+        } ?: run {
             Toast.makeText(this, "Данные о человеке не найдены", Toast.LENGTH_SHORT).show()
             finish()
+        }
+    }
+
+    private fun setupSaveButton(person: MissingPerson) {
+        findViewById<FloatingActionButton>(R.id.saveButton).setOnClickListener {
+            // Сохраняем в базу данных
+            database.addMissingPerson(person, this)
         }
     }
 
@@ -69,6 +88,10 @@ class PersonDetailActivity : AppCompatActivity() {
 
         findViewById<TextView>(R.id.personDescription).text =
             person.description.ifEmpty { "Описание отсутствует" }
+    }
 
+    override fun onDestroy() {
+        database.close()
+        super.onDestroy()
     }
 }
