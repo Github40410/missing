@@ -42,6 +42,10 @@ android {
 
 dependencies {
 
+    implementation("com.google.android.material:material:1.6.1")
+    implementation("androidx.appcompat:appcompat:1.5.1")
+    implementation("com.google.code.gson:gson:2.9.0")
+    implementation("androidx.work:work-runtime-ktx:2.7.1")
     implementation("androidx.work:work-runtime-ktx:2.9.0")
     implementation("androidx.concurrent:concurrent-futures-ktx:1.1.0")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
@@ -55,6 +59,7 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
+    implementation(libs.firebase.crashlytics.buildtools)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

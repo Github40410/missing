@@ -2,11 +2,13 @@ package com.example.missingpeople.servic
 
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.text.TextUtils
 import android.util.TypedValue
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity.MODE_PRIVATE
 import com.bumptech.glide.Glide
 import com.example.missingpeople.R
 import com.example.missingpeople.repositor.MissingPerson
@@ -16,9 +18,11 @@ class ConstructView(val linearLayout: LinearLayout) {
     fun createDynamicImageTextItem(
         context: Context,
         parent: LinearLayout,
-        missingPerson: MissingPerson
+        missingPerson: MissingPerson,
+        them: Boolean
 
     ) {
+
         // Создаем контейнер
         val container = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -41,6 +45,7 @@ class ConstructView(val linearLayout: LinearLayout) {
             scaleType = ImageView.ScaleType.CENTER_CROP
         }
 
+
         // Создаем TextView
         val textView = TextView(context).apply {
             layoutParams = LinearLayout.LayoutParams(
@@ -50,7 +55,10 @@ class ConstructView(val linearLayout: LinearLayout) {
                 weight = 1f
             }
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
-            setTextColor(context.resources.getColor(android.R.color.black, null))
+            if(them){
+                setTextColor(context.resources.getColor(android.R.color.white, null))
+            }
+            else setTextColor(context.resources.getColor(android.R.color.black, null))
             maxLines = 2
             ellipsize = TextUtils.TruncateAt.END
         }

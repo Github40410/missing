@@ -1,70 +1,28 @@
 package com.example.missingpeople.view
 
-import android.Manifest
-import android.app.AlarmManager
 import android.app.AlertDialog
-import android.app.PendingIntent
-import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.graphics.Paint
-import android.icu.util.Calendar
-import android.os.Build
 import android.os.Bundle
-import android.os.SystemClock
-import android.provider.Settings
-import android.text.TextUtils
-import android.util.Log
-import android.util.TypedValue
-import android.view.LayoutInflater
 import android.view.View
-import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.constraintlayout.widget.ConstraintSet
-import androidx.constraintlayout.widget.ConstraintSet.Constraint
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.GravityCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.marginEnd
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
-import androidx.work.Constraints
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.NetworkType
-import androidx.work.OutOfQuotaPolicy
-import androidx.work.PeriodicWorkRequest
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
-import com.bumptech.glide.Glide
 import com.example.missingpeople.R
 import com.example.missingpeople.databinding.ActivityMainBinding
 import com.example.missingpeople.repositor.MissingPerson
 import com.example.missingpeople.repositor.RepWebMVD
 import com.example.missingpeople.repositor.RussianRegion
-import com.example.missingpeople.servic.AlarmParserMVD
 import com.example.missingpeople.servic.ConstructView
 import com.example.missingpeople.servic.ParserMVD
-import com.example.missingpeople.servic.ParserWorker
-import com.example.missingpeople.servic.WorkScheduler
 import com.google.android.material.chip.Chip
-import com.google.android.material.chip.ChipGroup
-import com.google.android.material.internal.ViewUtils.dpToPx
 import com.google.android.material.navigation.NavigationView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.concurrent.Semaphore
-import java.util.concurrent.TimeUnit
-
 
 
 class MainActivity : AppCompatActivity() {
@@ -81,6 +39,9 @@ class MainActivity : AppCompatActivity() {
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
+        applySavedTheme()
+
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -115,6 +76,21 @@ class MainActivity : AppCompatActivity() {
         setupFilterButton()
         setupSearchButton()
         updateSelectedRegionsUI()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        applySavedTheme()
+    }
+
+    private fun applySavedTheme() {
+        val sharedPreferences = getSharedPreferences("app_settings", MODE_PRIVATE)
+        val theme = sharedPreferences.getBoolean("app_theme", false) ?: false
+
+        when (theme) {
+            true -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            else -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+        }
     }
 
     private fun setupRegionSelection() {
@@ -260,7 +236,8 @@ class MainActivity : AppCompatActivity() {
                             parserMVD.collectUniqueLinks( // Теперь возвращает List<String>
                                 parserMVD.extractAllPageUrls(url)
                             ),
-                            this@MainActivity
+                            this@MainActivity,
+                            sharedPreferences = this@MainActivity.getSharedPreferences("app_settings", MODE_PRIVATE).getBoolean("app_theme", false)
                         )
                     }
 
@@ -270,11 +247,6 @@ class MainActivity : AppCompatActivity() {
                             "Найдено: ${people.size} записей",
                             Toast.LENGTH_SHORT
                         ).show()
-
-                        if (people.isNotEmpty()) {
-                            // Show first result as notification
-                            showNotification(people.first())
-                        }
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
@@ -317,6 +289,7 @@ class MainActivity : AppCompatActivity() {
             super.onBackPressed()
         }
     }
+
 
 
 

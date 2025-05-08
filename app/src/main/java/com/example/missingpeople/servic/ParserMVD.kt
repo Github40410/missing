@@ -1,27 +1,18 @@
 package com.example.missingpeople.servic
 
 import android.content.Context
-import android.view.LayoutInflater
-import android.widget.LinearLayout
 import android.widget.Toast
-import androidx.core.content.ContentProviderCompat.requireContext
-import com.example.missingpeople.R
-import com.example.missingpeople.databinding.ActivityMainBinding
 import com.example.missingpeople.repositor.MissingPerson
-import com.example.missingpeople.repositor.RepWebMVD
-import com.example.missingpeople.view.MainActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import kotlinx.io.IOException
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -161,7 +152,7 @@ class ParserMVD {
     }
 
     // Парсинг пропавшего
-    public suspend fun parserPersonMissing(urls: List<String>, context: Context):List<MissingPerson>{
+    public suspend fun parserPersonMissing(urls: List<String>, context: Context, sharedPreferences: Boolean):List<MissingPerson>{
         val listMissingPeople = ArrayList<MissingPerson>()
 
         // Параллельная обработка с ограничением
@@ -224,7 +215,8 @@ class ParserMVD {
                     constructView!!.createDynamicImageTextItem(
                         context,
                         constructView!!.linearLayout,
-                        it
+                        it,
+                        sharedPreferences
                     )
                 }
             }
