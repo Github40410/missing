@@ -104,12 +104,72 @@
                         android:visibility="gone"
                         android:paddingTop="8dp">
 
-                        <!-- Здесь можно добавить другие фильтры -->
-                        <TextView
+                        <!-- Фильтр по полу -->
+                        <com.google.android.material.chip.ChipGroup
+                            android:id="@+id/genderFilterGroup"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Другие фильтры"
-                            android:textStyle="bold"/>
+                            android:layout_marginBottom="8dp"
+                            app:singleSelection="true">
+
+                            <com.google.android.material.chip.Chip
+                                style="@style/Widget.MaterialComponents.Chip.Choice"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Все"
+                                android:checked="true"/>
+
+                            <com.google.android.material.chip.Chip
+                                android:id="@+id/chipMale"
+                                style="@style/Widget.MaterialComponents.Chip.Choice"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Мужской"/>
+
+                            <com.google.android.material.chip.Chip
+                                android:id="@+id/chipFemale"
+                                style="@style/Widget.MaterialComponents.Chip.Choice"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Женский"/>
+                        </com.google.android.material.chip.ChipGroup>
+
+                        <!-- Фильтр по возрасту -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginBottom="8dp">
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:hint="Возраст от"
+                                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/ageFromInput"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="number"/>
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:hint="до"
+                                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/ageToInput"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="number"/>
+                            </com.google.android.material.textfield.TextInputLayout>
+                        </LinearLayout>
+
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

@@ -3,6 +3,8 @@ package com.example.missingpeople.view
 import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.Toast
@@ -31,11 +33,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navView: NavigationView
     private lateinit var binding: ActivityMainBinding
-    private val repositMVD: RepWebMVD = RepWebMVD()
     private val parserMVD: ParserMVD = ParserMVD()
     private lateinit var linearLayoutPeople: LinearLayout // Используем lateinit
 
     private val selectedRegions = mutableSetOf<RussianRegion>(RussianRegion.ALL)
+
+    private val prefsName = "filter_prefs"
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,11 +79,70 @@ class MainActivity : AppCompatActivity() {
         setupFilterButton()
         setupSearchButton()
         updateSelectedRegionsUI()
+
+        setupGenderFilter()
+        setupAgeFilters()
+        loadFilterSettings()
     }
 
     override fun onStart() {
         super.onStart()
         applySavedTheme()
+    }
+
+    private fun setupGenderFilter() {
+        binding.genderFilterGroup.setOnCheckedStateChangeListener { group, checkedIds ->
+            val gender = when (checkedIds.firstOrNull()) {
+                R.id.chipMale -> "male"
+                R.id.chipFemale -> "female"
+                else -> "all"
+            }
+            saveFilterSetting("gender", gender)
+        }
+    }
+
+
+
+    private fun setupAgeFilters() {
+        binding.ageFromInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+                //
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                //
+            }
+
+            override fun afterTextChanged(s: Editable?) {
+                saveFilterSetting("age_from", s?.toString())
+            }
+
+        })
+
+        binding.ageToInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+                //
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                //
+            }
+
+            override fun afterTextChanged(s: Editable?) {
+                saveFilterSetting("age_to", s?.toString())
+            }
+
+        })
+    }
+
+
+
+    private fun saveFilterSetting(key: String, value: String?) {
+        val prefs = getSharedPreferences(prefsName, MODE_PRIVATE)
+        with(prefs.edit()) {
+            putString(key, value)
+            apply()
+        }
     }
 
     private fun applySavedTheme() {
@@ -92,6 +154,23 @@ class MainActivity : AppCompatActivity() {
             else -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         }
     }
+
+    private fun loadFilterSettings() {
+        val prefs = getSharedPreferences(prefsName, MODE_PRIVATE)
+
+        // Восстанавливаем фильтр по полу
+        when (prefs.getString("gender", "all")) {
+            "male" -> binding.genderFilterGroup.check(R.id.chipMale)
+            "female" -> binding.genderFilterGroup.check(R.id.chipFemale)
+            else -> binding.genderFilterGroup.clearCheck()
+        }
+
+        // Восстанавливаем возраст
+        binding.ageFromInput.setText(prefs.getString("age_from", ""))
+        binding.ageToInput.setText(prefs.getString("age_to", ""))
+
+    }
+
 
     private fun setupRegionSelection() {
         binding.btnSelectRegions.setOnClickListener {
@@ -278,10 +357,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showNotification(person: MissingPerson) {
-        NotificationPeopleMissing(this).showNotification(person)
-    }
-
     override fun onBackPressed() {
         if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
             drawerLayout.closeDrawer(GravityCompat.START)
@@ -289,13 +364,6 @@ class MainActivity : AppCompatActivity() {
             super.onBackPressed()
         }
     }
-
-
-
-
-
-
-
 
 
     /*

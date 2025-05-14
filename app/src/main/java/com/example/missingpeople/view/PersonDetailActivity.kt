@@ -7,6 +7,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.bumptech.glide.Glide
@@ -34,6 +35,7 @@ class PersonDetailActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        applySavedTheme()
         setContentView(R.layout.activity_missing_person_details)
 
         // Инициализация базы данных
@@ -52,6 +54,16 @@ class PersonDetailActivity : AppCompatActivity() {
         } ?: run {
             Toast.makeText(this, "Данные о человеке не найдены", Toast.LENGTH_SHORT).show()
             finish()
+        }
+    }
+
+    private fun applySavedTheme() {
+        val sharedPreferences = getSharedPreferences("app_settings", MODE_PRIVATE)
+        val theme = sharedPreferences.getBoolean("app_theme", false) ?: false
+
+        when (theme) {
+            true -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            else -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         }
     }
 

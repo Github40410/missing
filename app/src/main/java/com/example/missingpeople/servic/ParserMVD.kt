@@ -152,54 +152,28 @@ class ParserMVD {
     }
 
     // Парсинг пропавшего
-    public suspend fun parserPersonMissing(urls: List<String>, context: Context, sharedPreferences: Boolean):List<MissingPerson>{
+    public suspend fun parserPersonMissing(urls: List<String>, context: Context, sharedPreferences: Boolean): List<MissingPerson> {
+        // Сначала собираем всех пропавших
+        val listMissingPeople = collectAllMissingPersons(urls, context)
+
+        // Затем сортируем
+        val sortedList = sortMissingPersonsByDisappearanceDate(listMissingPeople)
+
+        // И только потом выводим на экран
+        displayMissingPersons(sortedList, context, sharedPreferences)
+
+        return sortedList
+    }
+
+    private suspend fun collectAllMissingPersons(urls: List<String>, context: Context): ArrayList<MissingPerson> {
         val listMissingPeople = ArrayList<MissingPerson>()
 
         // Параллельная обработка с ограничением
         val jobs = urls.map { url ->
             CoroutineScope(Dispatchers.IO).async {
-                semaphore.withPermit { // Используем семафор для ограничения
+                semaphore.withPermit {
                     try {
-                        val doc = Jsoup.connect(url).userAgent(userAgents.random()).get()
-
-                        // Оригинальный код парсинга без изменений
-                        var fullName =  ""
-
-                        val metaElements = doc.select(".meta_list .meta")
-                        val metaData = mutableMapOf<String, String>()
-
-                        metaElements.forEach { element ->
-                            val key = element.selectFirst("strong")?.text()?.replace(":", "")?.trim()
-                            val value = element.ownText().trim()
-                            if (key != null) metaData[key] = value
-                        }
-
-                        val gender = when (metaData["Пол"]?.firstOrNull()?.uppercase()) {
-                            "М" -> "Мужской"
-                            "Ж" -> "Женский"
-                            else -> "Не указан"
-                        }
-
-                        val birthDate = parseDate(metaData["Дата рождения"], "birthDate")
-                        val disappearanceDate = parseDate(metaData["Дата пропажи"], "disappearanceDate")
-
-                        val imgElement = doc.selectFirst("img.imgswipdis")
-
-                        // Извлекаем ФИО из og:title
-                        fullName = doc.selectFirst("meta[property=og:title]")?.attr("content").toString()
-                        val description = doc.selectFirst("meta[property=og:description]")?.attr("content").toString()
-
-
-                        var photoUrl = ""
-                        imgElement?.let { img ->
-                            val src = img.attr("src")
-
-                            photoUrl = src
-                        } ?: Toast.makeText(context, "Не удалось обработать", Toast.LENGTH_SHORT).show()
-
-
-                        MissingPerson(fullName, description, birthDate, disappearanceDate, gender, photoUrl)
-
+                        parseSingleMissingPerson(url, context)
                     } catch (e: Exception) {
                         null
                     }
@@ -210,26 +184,70 @@ class ParserMVD {
         // Собираем все результаты
         jobs.awaitAll().filterNotNull().forEach {
             listMissingPeople.add(it)
-            if(constructView!=null) {
+        }
+
+        return listMissingPeople
+    }
+
+    private suspend fun parseSingleMissingPerson(url: String, context: Context): MissingPerson? {
+        return withContext(Dispatchers.IO) {
+            try {
+                val doc = Jsoup.connect(url).userAgent(userAgents.random()).get()
+
+                val metaElements = doc.select(".meta_list .meta")
+                val metaData = mutableMapOf<String, String>()
+
+                metaElements.forEach { element ->
+                    val key = element.selectFirst("strong")?.text()?.replace(":", "")?.trim()
+                    val value = element.ownText().trim()
+                    if (key != null) metaData[key] = value
+                }
+
+                val gender = when (metaData["Пол"]?.firstOrNull()?.uppercase()) {
+                    "М" -> "Мужской"
+                    "Ж" -> "Женский"
+                    else -> "Не указан"
+                }
+
+                val birthDate = parseDate(metaData["Дата рождения"], "birthDate")
+                val disappearanceDate = parseDate(metaData["Дата пропажи"], "disappearanceDate")
+
+                val fullName = doc.selectFirst("meta[property=og:title]")?.attr("content").toString()
+                val description = doc.selectFirst("meta[property=og:description]")?.attr("content").toString()
+
+                val imgElement = doc.selectFirst("img.imgswipdis")
+                var photoUrl = imgElement?.attr("src") ?: ""
+
+                MissingPerson(fullName, description, birthDate, disappearanceDate, gender, photoUrl)
+            } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Ошибка при обработке: ${url}", Toast.LENGTH_SHORT).show()
+                }
+                null
+            }
+        }
+    }
+
+    private suspend fun displayMissingPersons(persons: List<MissingPerson>, context: Context, sharedPreferences: Boolean) {
+        if (constructView != null) {
+            withContext(Dispatchers.Main) {
+                persons.forEach { person ->
                     constructView!!.createDynamicImageTextItem(
                         context,
                         constructView!!.linearLayout,
-                        it,
+                        person,
                         sharedPreferences
                     )
                 }
             }
         }
+    }
 
-        withContext(Dispatchers.Main) {
-            Toast.makeText(
-                context,
-                "Обработано: ${listMissingPeople.size} записей",
-                Toast.LENGTH_SHORT
-            ).show()
-        }
-        return listMissingPeople
+    fun sortMissingPersonsByDisappearanceDate(persons: List<MissingPerson>): List<MissingPerson> {
+        return persons.sortedWith(
+            compareBy<MissingPerson> { it.disappearanceDate != null } // Сначала те, у кого есть дата (true > false)
+                .thenBy { it.disappearanceDate ?: Date(Long.MAX_VALUE) } // Затем сортируем по дате (null заменяем на максимальную)
+        ).reversed() // Разворачиваем, так как compareBy сортирует по возрастанию
     }
 
     private fun parseDate(dateString: String?, formatKey: String): Date? {
