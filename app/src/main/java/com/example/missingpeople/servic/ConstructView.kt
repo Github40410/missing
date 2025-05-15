@@ -19,7 +19,7 @@ import java.util.Date
 class ConstructView(val linearLayout: LinearLayout) {
     private val prefsName = "filter_prefs"
 
-    fun createDynamicImageTextItem(
+    public fun createDynamicImageTextItem(
         context: Context,
         parent: LinearLayout,
         missingPerson: MissingPerson,

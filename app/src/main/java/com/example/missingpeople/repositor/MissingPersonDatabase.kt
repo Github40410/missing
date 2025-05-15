@@ -5,6 +5,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.widget.Toast
+import java.sql.Date
 
 class MissingPersonDatabase(context: Context):SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
     companion object {
@@ -69,6 +70,56 @@ class MissingPersonDatabase(context: Context):SQLiteOpenHelper(context, DATABASE
         } finally {
             db.close()
         }
+    }
+
+    fun getAllMissingPersons(): List<MissingPerson> {
+        val db = readableDatabase
+        val personList = mutableListOf<MissingPerson>()
+
+        val cursor = db.query(
+            TABLE_NAME,
+            null, // все столбцы
+            null, // без условий WHERE
+            null, // без аргументов для WHERE
+            null, // без GROUP BY
+            null, // без HAVING
+            null  // без ORDER BY
+        )
+
+        cursor.use {
+            while (it.moveToNext()) {
+                val id = it.getLong(it.getColumnIndexOrThrow(COLUMN_ID))
+                val name = it.getString(it.getColumnIndexOrThrow(COLUMN_NAME))
+                val description = it.getString(it.getColumnIndexOrThrow(COLUMN_DESCRIPTION))
+
+                val birthDateMillis = it.getLong(it.getColumnIndexOrThrow(COLUMN_BIRTH_DATE))
+                val birthDate = if (!it.isNull(it.getColumnIndexOrThrow(COLUMN_BIRTH_DATE))) {
+                    Date(birthDateMillis)
+                } else null
+
+                val disappearanceDateMillis = it.getLong(it.getColumnIndexOrThrow(COLUMN_DISAPPEARANCE_DATE))
+                val disappearanceDate = if (!it.isNull(it.getColumnIndexOrThrow(COLUMN_DISAPPEARANCE_DATE))) {
+                    Date(disappearanceDateMillis)
+                } else null
+
+                val gender = it.getString(it.getColumnIndexOrThrow(COLUMN_GENDER))
+                val photoUrl = it.getString(it.getColumnIndexOrThrow(COLUMN_PHOTO_URL))
+
+                personList.add(
+                    MissingPerson(
+                        name,
+                        description,
+                        birthDate,
+                        disappearanceDate,
+                        gender,
+                        photoUrl
+                    )
+                )
+            }
+        }
+
+        db.close()
+        return personList
     }
 
 }
