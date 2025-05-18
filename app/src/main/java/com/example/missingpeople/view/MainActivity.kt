@@ -2,9 +2,11 @@ package com.example.missingpeople.view
 
 import android.app.AlertDialog
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.Toast
@@ -39,11 +41,12 @@ class MainActivity : AppCompatActivity() {
     private val selectedRegions = mutableSetOf<RussianRegion>(RussianRegion.ALL)
 
     private val prefsName = "filter_prefs"
+    private lateinit var sharedPrefs: SharedPreferences
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
-        applySavedTheme()
+        sharedPrefs = getSharedPreferences("app_settings", MODE_PRIVATE)
 
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -73,6 +76,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 else -> false
             }
+
         }
 
         setupRegionSelection()
@@ -83,6 +87,11 @@ class MainActivity : AppCompatActivity() {
         setupGenderFilter()
         setupAgeFilters()
         loadFilterSettings()
+
+        if (sharedPrefs.getBoolean("ferstTry", true)){
+            fetchAndAddUrls(ParserMVD())
+            sharedPrefs.edit().putBoolean("ferstTry", false).apply()
+        }
     }
 
     override fun onStart() {
@@ -142,6 +151,48 @@ class MainActivity : AppCompatActivity() {
         with(prefs.edit()) {
             putString(key, value)
             apply()
+        }
+    }
+
+    private fun fetchAndAddUrls(parser: ParserMVD) {
+        lifecycleScope.launch {
+            // Показываем прогресс в UI потоке
+            Toast.makeText(
+                this@MainActivity,
+                "Начинаем сбор URL...",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            try {
+                // Переключаемся на IO для сетевых операций
+                val (pageUrls, uniqueUrls, addedCount) = withContext(Dispatchers.IO) {
+                    // Получаем URL с сайта
+                    val startUrl = "https://поисковая-база.рф/search/sOrder,dt_pub_date/iOrderType,desc/category,9/iPage,"
+                    val urls = parser.extractAllPageUrls(startUrl)
+                    val unique = parser.collectUniqueLinks(urls)
+
+                    // Добавляем в базу (это тоже IO операция)
+                    val count = parser.addMissingPersonUrlsToDatabase(unique, this@MainActivity)
+
+                    Triple(urls, unique, count)
+                }
+
+                // Показываем результат в UI потоке
+                Toast.makeText(
+                    this@MainActivity,
+                    "Собрано ${uniqueUrls.size} URL, добавлено $addedCount новых",
+                    Toast.LENGTH_LONG
+                ).show()
+
+            } catch (e: Exception) {
+                // Обработка ошибок в UI потоке
+                Toast.makeText(
+                    this@MainActivity,
+                    "Ошибка: ${e.localizedMessage}",
+                    Toast.LENGTH_LONG
+                ).show()
+                Log.e("fetchAndAddUrls", "Error fetching URLs", e)
+            }
         }
     }
 

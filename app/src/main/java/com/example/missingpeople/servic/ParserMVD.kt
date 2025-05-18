@@ -3,6 +3,7 @@ package com.example.missingpeople.servic
 import android.content.Context
 import android.widget.Toast
 import com.example.missingpeople.repositor.MissingPerson
+import com.example.missingpeople.repositor.MissingPersonDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -73,6 +74,35 @@ class ParserMVD {
         "birthDate" to SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()),
         "disappearanceDate" to SimpleDateFormat("MMMM dd, yyyy", Locale.US)
     )
+
+    suspend fun addMissingPersonUrlsToDatabase(urls: List<String>, context: Context): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                val dbHelper = MissingPersonDatabase(context)
+                val addedCount = dbHelper.addMissingPersonUrls(urls)
+                addedCount > 0 // Возвращаем true, если добавлена хотя бы одна запись
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Ошибка при добавлении URL: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+                false
+            }
+        }
+    }
+
+    suspend fun getAllUrlsFromDatabase(context: Context): List<String> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val dbHelper = MissingPersonDatabase(context)
+                dbHelper.getAllUrls()
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Ошибка при получении URL: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+                emptyList()
+            }
+        }
+    }
 
     suspend fun extractAllPageUrls(startUrl: String): ArrayList<String> {
 
@@ -218,7 +248,7 @@ class ParserMVD {
                 val imgElement = doc.selectFirst("img.imgswipdis")
                 var photoUrl = imgElement?.attr("src") ?: ""
 
-                MissingPerson(fullName, description, birthDate, disappearanceDate, gender, photoUrl)
+                MissingPerson(fullName, description, birthDate, disappearanceDate, gender, photoUrl, url)
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(context, "Ошибка при обработке: ${url}", Toast.LENGTH_SHORT).show()

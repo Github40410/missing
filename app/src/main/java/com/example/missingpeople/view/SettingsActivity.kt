@@ -11,13 +11,16 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import com.example.missingpeople.R
 import com.example.missingpeople.databinding.ActivitySettingsBinding
 import com.example.missingpeople.repositor.RussianRegion
 import com.example.missingpeople.servic.AlarmParserMVD
 import com.google.android.material.chip.Chip
+import com.google.android.material.navigation.NavigationView
 import com.google.firebase.crashlytics.buildtools.reloc.com.google.common.reflect.TypeToken
 import com.google.gson.Gson
 import java.util.Calendar
@@ -26,6 +29,8 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySettingsBinding
     private lateinit var sharedPref: SharedPreferences
     private val selectedRegions = mutableSetOf<RussianRegion>()
+    private lateinit var navView: NavigationView
+    private lateinit var drawerLayout: DrawerLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,6 +45,33 @@ class SettingsActivity : AppCompatActivity() {
         setupMonitoringSwitch()  // <-- Основные изменения здесь
         setupRegionSelection()
         setupSaveButton()
+
+        drawerLayout = findViewById(R.id.drawer_layout)
+        navView = findViewById(R.id.nav_view)
+
+
+        // Обработка выбора пунктов меню
+        navView.setNavigationItemSelectedListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.nav_home -> {
+                    startActivity(Intent(this, MainActivity::class.java))
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                    true
+                }
+                R.id.nav_saved -> {
+                    startActivity(Intent(this, SavedPersonsActivity::class.java))
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                    true
+                }
+                R.id.nav_settings -> {
+
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                    true
+                }
+                else -> false
+            }
+
+        }
     }
 
     override fun onStart() {

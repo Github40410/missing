@@ -1,6 +1,7 @@
 package com.example.missingpeople.view
 
 import android.app.DatePickerDialog
+import android.content.Intent
 import android.icu.text.SimpleDateFormat
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -13,8 +14,10 @@ import android.widget.RadioGroup
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import com.example.missingpeople.R
 import com.example.missingpeople.repositor.MissingPerson
 import com.example.missingpeople.servic.ConstructView
@@ -22,6 +25,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.navigation.NavigationView
 import com.google.android.material.textfield.TextInputEditText
 import java.util.Calendar
 import java.util.Locale
@@ -35,6 +39,8 @@ class SavedPersonsActivity : AppCompatActivity() {
     private val construct by lazy { ConstructView(findViewById(R.id.personsContainer)) } // Изменено на lazy
     private var currentGenderFilter: String? = null
     private var currentDateFilter: Pair<Date?, Date?>? = null
+    private lateinit var navView: NavigationView
+    private lateinit var drawerLayout: DrawerLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,8 +51,35 @@ class SavedPersonsActivity : AppCompatActivity() {
         // Убрали явную инициализацию construct здесь
 
         setupSearchButton()
-        setupFilterControls()
+        setupFilterButton()
         loadPersonsToArray()
+
+        drawerLayout = findViewById(R.id.drawer_layout)
+        navView = findViewById(R.id.nav_view)
+
+
+        // Обработка выбора пунктов меню
+        navView.setNavigationItemSelectedListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.nav_home -> {
+                    startActivity(Intent(this, MainActivity::class.java))
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                    true
+                }
+                R.id.nav_saved -> {
+
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                    true
+                }
+                R.id.nav_settings -> {
+                    startActivity(Intent(this, SettingsActivity::class.java))
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                    true
+                }
+                else -> false
+            }
+
+        }
 
     }
 
@@ -56,25 +89,10 @@ class SavedPersonsActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupFilterControls() {
-        // Кнопка фильтра
+    private fun setupFilterButton() {
+        // Оставили только кнопку фильтра без чипсов
         findViewById<MaterialButton>(R.id.btnFilter).setOnClickListener {
             showFilterDialog()
-        }
-
-        // Чипсы для быстрого выбора фильтров
-        val chipGroup = findViewById<ChipGroup>(R.id.filterChips)
-
-        arrayOf("Мужской", "Женский", "Все").forEach { gender ->
-            val chip = Chip(this).apply {
-                text = gender
-                isCheckable = true
-                setOnClickListener {
-                    currentGenderFilter = if (gender == "Все") null else gender
-                    applyFilters()
-                }
-            }
-            chipGroup.addView(chip)
         }
     }
 
@@ -177,7 +195,8 @@ class SavedPersonsActivity : AppCompatActivity() {
                                 Date(it.getLong(it.getColumnIndexOrThrow(COLUMN_DISAPPEARANCE_DATE)))
                             } else null,
                             gender = it.getString(it.getColumnIndexOrThrow(COLUMN_GENDER)),
-                            photos = it.getString(it.getColumnIndexOrThrow(COLUMN_PHOTO_URL))
+                            photos = it.getString(it.getColumnIndexOrThrow(COLUMN_PHOTO_URL)),
+                            url = ""
                         )
                         allPersons.add(person)
                     }

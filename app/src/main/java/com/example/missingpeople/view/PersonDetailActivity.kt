@@ -8,13 +8,16 @@ import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import com.bumptech.glide.Glide
 import com.example.missingpeople.R
 import com.example.missingpeople.repositor.MissingPerson
 import com.example.missingpeople.repositor.MissingPersonDatabase
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.navigation.NavigationView
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -22,6 +25,8 @@ class PersonDetailActivity : AppCompatActivity() {
 
     private lateinit var database: MissingPersonDatabase
     private lateinit var currentPerson: MissingPerson
+    private lateinit var navView: NavigationView
+    private lateinit var drawerLayout: DrawerLayout
 
     companion object {
         const val EXTRA_PERSON = "extra_person"
@@ -54,6 +59,33 @@ class PersonDetailActivity : AppCompatActivity() {
         } ?: run {
             Toast.makeText(this, "Данные о человеке не найдены", Toast.LENGTH_SHORT).show()
             finish()
+        }
+
+        drawerLayout = findViewById(R.id.drawer_layout)
+        navView = findViewById(R.id.nav_view)
+
+
+        // Обработка выбора пунктов меню
+        navView.setNavigationItemSelectedListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.nav_home -> {
+                    startActivity(Intent(this, MainActivity::class.java))
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                    true
+                }
+                R.id.nav_saved -> {
+                    startActivity(Intent(this, SavedPersonsActivity::class.java))
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                    true
+                }
+                R.id.nav_settings -> {
+                    startActivity(Intent(this, SettingsActivity::class.java))
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                    true
+                }
+                else -> false
+            }
+
         }
     }
 

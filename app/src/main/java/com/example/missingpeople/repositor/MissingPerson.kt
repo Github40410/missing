@@ -10,7 +10,8 @@ class MissingPerson (
     val birthDate: Date?,
     val disappearanceDate: Date?,
     val gender: String,
-    val photos: String
+    val photos: String,
+    val url: String
 ):Serializable {
     companion object {
         private const val serialVersionUID = 1L

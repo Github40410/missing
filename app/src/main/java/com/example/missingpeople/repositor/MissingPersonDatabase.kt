@@ -4,14 +4,16 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Log
 import android.widget.Toast
 import java.sql.Date
 
 class MissingPersonDatabase(context: Context):SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
     companion object {
         private const val DATABASE_NAME = "missing_persons.db"
-        private const val DATABASE_VERSION = 1
+        private const val DATABASE_VERSION = 2
         private const val TABLE_NAME = "missing_persons"
+        private const val TABLE_URLS = "missing_persons_urls"
         private const val COLUMN_ID = "id"
         private const val COLUMN_NAME = "name"
         private const val COLUMN_DESCRIPTION = "description"
@@ -19,6 +21,7 @@ class MissingPersonDatabase(context: Context):SQLiteOpenHelper(context, DATABASE
         private const val COLUMN_DISAPPEARANCE_DATE = "disappearance_date"
         private const val COLUMN_GENDER = "gender"
         private const val COLUMN_PHOTO_URL = "photo_url"
+        private const val COLUMN_URL = "url"
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -35,37 +38,155 @@ class MissingPersonDatabase(context: Context):SQLiteOpenHelper(context, DATABASE
             )
         """.trimIndent()
         db.execSQL(createTableQuery)
+
+        val createUrlsTableQuery = """
+            CREATE TABLE $TABLE_URLS (
+                $COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COLUMN_URL TEXT UNIQUE NOT NULL
+            )
+        """.trimIndent()
+        db.execSQL(createUrlsTableQuery)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        db.execSQL("DROP TABLE IF EXISTS $TABLE_NAME")
-        onCreate(db)
+        if (oldVersion < 2) {
+            val createUrlsTableQuery = """
+                CREATE TABLE $TABLE_URLS (
+                    $COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                    $COLUMN_URL TEXT UNIQUE NOT NULL
+                )
+            """.trimIndent()
+            db.execSQL(createUrlsTableQuery)
+        }
+    }
+
+    fun addMissingPersonUrl(url: String): Boolean {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put(COLUMN_URL, url)
+        }
+
+        return try {
+            db.insertWithOnConflict(TABLE_URLS, null, values, SQLiteDatabase.CONFLICT_IGNORE) != -1L
+        } catch (e: Exception) {
+            false
+        } finally {
+            db.close()
+        }
+    }
+
+    fun addMissingPersonUrls(urls: List<String>): Int {
+        val db = writableDatabase
+        var count = 0
+
+        try {
+            db.beginTransaction()
+            urls.forEach { url ->
+                val values = ContentValues().apply {
+                    put(COLUMN_URL, url)
+                }
+                if (db.insertWithOnConflict(TABLE_URLS, null, values, SQLiteDatabase.CONFLICT_IGNORE) != -1L) {
+                    count++
+                }
+            }
+            db.setTransactionSuccessful()
+        } catch (e: Exception) {
+            Log.e("Database", "Error adding URLs", e)
+        } finally {
+            db.endTransaction()
+            db.close()
+        }
+
+        return count
+    }
+
+    fun containsUrl(url: String): Boolean {
+        val db = readableDatabase
+        val query = "SELECT 1 FROM $TABLE_URLS WHERE $COLUMN_URL = ?"
+
+        return db.rawQuery(query, arrayOf(url)).use { cursor ->
+            cursor.moveToFirst()
+        }
+    }
+
+    fun getAllUrls(): List<String> {
+        val db = readableDatabase
+        val urls = mutableListOf<String>()
+
+        val cursor = db.query(
+            TABLE_URLS,
+            arrayOf(COLUMN_URL),
+            null, null, null, null, null
+        )
+
+        cursor.use {
+            while (it.moveToNext()) {
+                urls.add(it.getString(it.getColumnIndexOrThrow(COLUMN_URL)))
+            }
+        }
+
+        db.close()
+        return urls
     }
 
     fun addMissingPerson(person: MissingPerson, context: Context): Boolean {
         val db = writableDatabase
-        val values = ContentValues().apply {
-            put(COLUMN_NAME, person.name)
-            put(COLUMN_DESCRIPTION, person.description)
-            put(COLUMN_BIRTH_DATE, person.birthDate?.time)
-            put(COLUMN_DISAPPEARANCE_DATE, person.disappearanceDate?.time)
-            put(COLUMN_GENDER, person.gender)
-            put(COLUMN_PHOTO_URL, person.photos)
-        }
+        // Проверяем по имени и описанию (они должны быть обязательными)
+        val selection = "$COLUMN_NAME = ? AND $COLUMN_DESCRIPTION = ?"
+        val selectionArgs = arrayOf(
+            person.name,
+            person.description ?: "" // Если description null, заменяем на пустую строку
+        )
 
         return try {
-            val result = db.insertWithOnConflict(TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_IGNORE)
-            if (result == -1L) {
-                // Запись уже существует
-                Toast.makeText(context, "Запись уже присутствует", Toast.LENGTH_SHORT).show()
-                false
+            // Проверяем наличие записи
+            val cursor = db.query(
+                TABLE_NAME,
+                null,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                null
+            )
+
+            if (cursor.count > 0) {
+                // Запись существует - удаляем её
+                cursor.moveToFirst()
+                val id = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_ID))
+                val deletedRows = db.delete(TABLE_NAME, "$COLUMN_ID = ?", arrayOf(id.toString()))
+
+                cursor.close()
+
+                if (deletedRows > 0) {
+                    Toast.makeText(context, "Запись удалена", Toast.LENGTH_SHORT).show()
+                    true
+                } else {
+                    Toast.makeText(context, "Ошибка при удалении записи", Toast.LENGTH_SHORT).show()
+                    false
+                }
             } else {
-                // Запись добавлена
-                Toast.makeText(context, "Запись добавлена", Toast.LENGTH_SHORT).show()
-                true
+                // Записи нет - добавляем новую
+                val values = ContentValues().apply {
+                    put(COLUMN_NAME, person.name)
+                    put(COLUMN_DESCRIPTION, person.description)
+                    person.birthDate?.time?.let { put(COLUMN_BIRTH_DATE, it) }
+                    person.disappearanceDate?.time?.let { put(COLUMN_DISAPPEARANCE_DATE, it) }
+                    put(COLUMN_GENDER, person.gender)
+                    put(COLUMN_PHOTO_URL, person.photos)
+                }
+
+                val result = db.insertWithOnConflict(TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE)
+                if (result == -1L) {
+                    Toast.makeText(context, "Ошибка при добавлении записи", Toast.LENGTH_SHORT).show()
+                    false
+                } else {
+                    Toast.makeText(context, "Запись добавлена", Toast.LENGTH_SHORT).show()
+                    true
+                }
             }
         } catch (e: Exception) {
-            Toast.makeText(context, "Ошибка при сохранении: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Ошибка: ${e.message}", Toast.LENGTH_SHORT).show()
             false
         } finally {
             db.close()
@@ -112,7 +233,8 @@ class MissingPersonDatabase(context: Context):SQLiteOpenHelper(context, DATABASE
                         birthDate,
                         disappearanceDate,
                         gender,
-                        photoUrl
+                        photoUrl,
+                        ""
                     )
                 )
             }
